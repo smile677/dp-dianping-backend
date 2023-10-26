@@ -24,4 +24,4 @@ mybatis-plus:
   type-aliases-package: com.dpdp.entity # 别名扫描包(com.dpdp.entity包类的实体在做mapper配置的时候就不用写全名了)
 logging:
   level:
-    com.hmdp: debug
+    com.smile67: debug

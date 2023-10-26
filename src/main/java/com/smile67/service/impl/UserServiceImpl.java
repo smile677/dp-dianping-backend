@@ -37,7 +37,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         session.setAttribute("code", code);
         // 5.发送验证码
         log.debug("发送短信验证码成功，验证码：{}", code);
-        //SMSUtils.sendMessage("瑞吉外卖登录验证码", "SMS_461810192", phone, code);
+        SMSUtils.sendMessage("点评网站登录验证码", "SMS_461810192", phone, code);
         // 6.返回ok
         return Result.ok();
     }
