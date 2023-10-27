@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpSession;
 
+import static com.smile67.utils.SystemConstants.USER_NICK_NAME_PREFIX;
+
 /**
  * <p>
  * 服务实现类
@@ -78,7 +80,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         // 1. 创建用户
         User user = new User();
         user.setPhone(phone);
-        user.setNickName("user_" + RandomUtil.randomString(10));
+        user.setNickName(USER_NICK_NAME_PREFIX + RandomUtil.randomString(10));
         // 2. 保存用户
         save(user);
         return user;
