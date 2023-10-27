@@ -43,11 +43,13 @@ public class UserController {
      * 登录功能
      *
      * @param loginForm 登录参数，包含手机号、验证码；或者手机号、密码
+     * @param session   登录成功后将用户信息存入到session中，同时校验验证码也需要session
+     * @return
      */
     @PostMapping("/login")
     public Result login(@RequestBody LoginFormDTO loginForm, HttpSession session) {
-        // TODO 实现登录功能
-        return Result.fail("功能未完成");
+        //  实现登录功能（短信验证码登录+注册）
+        return userService.login(loginForm, session);
     }
 
     /**
