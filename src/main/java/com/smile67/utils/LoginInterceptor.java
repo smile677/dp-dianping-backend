@@ -1,8 +1,6 @@
 package com.smile67.utils;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.smile67.dto.UserDTO;
-import com.smile67.entity.User;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -33,7 +31,7 @@ public class LoginInterceptor implements HandlerInterceptor {
         // 1. 获取session
         HttpSession session = request.getSession();
         // 2. 获取session中的用户
-        User user = (User) session.getAttribute("user");
+        UserDTO user = (UserDTO) session.getAttribute("user");
         // 2. 判断用户是否存在
         if (user == null) {
             // 3. 不存在，拦截，返回401状态码（无权访问）
@@ -41,9 +39,7 @@ public class LoginInterceptor implements HandlerInterceptor {
             return false;
         }
         // 4. 存在，保存用户信息到ThreadLocal
-        UserDTO userDTO = new UserDTO();
-        BeanUtil.copyProperties(user, userDTO);
-        UserHolder.saveUser(userDTO);
+        UserHolder.saveUser(user);
         // 5.放行
         return true;
     }

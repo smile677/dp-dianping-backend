@@ -1,9 +1,11 @@
 package com.smile67.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.smile67.dto.LoginFormDTO;
 import com.smile67.dto.Result;
+import com.smile67.dto.UserDTO;
 import com.smile67.entity.User;
 import com.smile67.mapper.UserMapper;
 import com.smile67.service.IUserService;
@@ -68,7 +70,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             user = createUserWithPhone(phone);
         }
         // 7. 保存用户信息到session中
-        session.setAttribute("user", user);
+        session.setAttribute("user", BeanUtil.copyProperties(user, UserDTO.class));
         // 因为是用cookie和session实现的登录，所以不需要返回登录凭证
         // 基于session登录，session的原理就是cookie,每一个 session都会有要给session_id
         // 第一次请求访问tomcat的时候服务端就会给把session_id塞到到cookie中
