@@ -72,7 +72,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         // 因为是用cookie和session实现的登录，所以不需要返回登录凭证
         // 基于session登录，session的原理就是cookie,每一个 session都会有要给session_id
         // 第一次请求访问tomcat的时候服务端就会给把session_id塞到到cookie中
-        // 后面的请求都会携携带session_id的cookie进行请求
+        // 后面的请求都会携带session_id的cookie进行请求
         return Result.ok();
     }
 
