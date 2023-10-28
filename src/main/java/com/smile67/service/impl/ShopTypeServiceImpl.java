@@ -13,9 +13,11 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.smile67.utils.RedisConstants.CACHE_SHOP_TYPE_KEY;
+import static com.smile67.utils.RedisConstants.CACHE_SHOP_TYPE_TTL;
 
 /**
  * <p>
@@ -52,9 +54,10 @@ public class ShopTypeServiceImpl extends ServiceImpl<ShopTypeMapper, ShopType> i
         // 使用stream流将bean集合转换为json集合
         shopTypeListJson = shopTypeList.stream()
                 .sorted(Comparator.comparing(ShopType::getSort))
-                .map(item -> JSONUtil.toJsonStr(item))
+                .map(shopType -> JSONUtil.toJsonStr(shopType))
                 .collect(Collectors.toList());
         stringRedisTemplate.opsForList().rightPushAll(CACHE_SHOP_TYPE_KEY, shopTypeListJson);
+        stringRedisTemplate.expire(CACHE_SHOP_TYPE_KEY,CACHE_SHOP_TYPE_TTL, TimeUnit.MINUTES);
         // 7. 返回数据
         return Result.ok(shopTypeList);
     }
