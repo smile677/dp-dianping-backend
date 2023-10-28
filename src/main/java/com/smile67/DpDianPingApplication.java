@@ -9,7 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class DpDianPingApplication {
 
     public static void main(String[] args) {
-        args = new String[]{"--mpw.key=97d73d2b0466533b"};
+        args = new String[]{"--mpw.key=fb7c084da403650d"};
         SpringApplication.run(DpDianPingApplication.class, args);
     }
 

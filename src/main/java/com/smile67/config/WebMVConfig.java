@@ -4,6 +4,7 @@ import com.smile67.utils.LoginInterceptor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -14,6 +15,8 @@ import springfox.documentation.service.ApiInfo;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 
+import javax.annotation.Resource;
+
 /**
  * @author smile67~
  * @date: 2023/10/26 - 10 - 26 - 23:02
@@ -23,10 +26,12 @@ import springfox.documentation.spring.web.plugins.Docket;
 @Configuration
 @Slf4j
 public class WebMVConfig implements WebMvcConfigurer {
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         // WebMvcConfigurer.super.addInterceptors(registry);
-        registry.addInterceptor(new LoginInterceptor())
+        registry.addInterceptor(new LoginInterceptor(stringRedisTemplate))
                 .excludePathPatterns(
                         "/shop/**",
                         "/voucher/**",

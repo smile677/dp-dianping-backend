@@ -6,10 +6,10 @@ spring:
   datasource:
     driver-class-name: com.mysql.jdbc.Driver
     url: jdbc:mysql://127.0.0.1:3306/hmdp?useSSL=false&serverTimezone=UTC
-    username: mpw:rLGqB6ygtUeJYq/Sk4EXxg==
-    password: mpw:jhs9uas8G3imcMLD5xwozg==
+    username: mpw:BkmVuJAQLIElCPHgP7oZcw==
+    password: mpw:4rwSv6pvNYGinHh8iT0Fpg==
   redis:
-    host: mpw:jhs9uas8G3imcMLD5xwozg==
+    host: mpw:6x/KCx1f7z2LoUtgmzcL7Q==
     port: 6379
     #password: jhs9uas8G3imcMLD5xwozg==
     lettuce:
