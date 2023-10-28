@@ -1,6 +1,7 @@
 package com.smile67.config;
 
 import com.smile67.utils.LoginInterceptor;
+import com.smile67.utils.RefreshTokenInterceptor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,10 +29,11 @@ import javax.annotation.Resource;
 public class WebMVConfig implements WebMvcConfigurer {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         // WebMvcConfigurer.super.addInterceptors(registry);
-        registry.addInterceptor(new LoginInterceptor(stringRedisTemplate))
+        registry.addInterceptor(new LoginInterceptor())
                 .excludePathPatterns(
                         "/shop/**",
                         "/voucher/**",
@@ -40,7 +42,9 @@ public class WebMVConfig implements WebMvcConfigurer {
                         "/blog/hot",
                         "/user/login",
                         "/user/code"
-                );
+                ).order(1);
+        registry.addInterceptor(new RefreshTokenInterceptor(stringRedisTemplate))
+                .addPathPatterns("/**").order(0);
     }
 
     /**
@@ -71,6 +75,7 @@ public class WebMVConfig implements WebMvcConfigurer {
      *
      * @param registry addResourceHandlers 是重写了父类的方法
      */
+    @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         log.info("开始设置静态资源映射...");
         registry.addResourceHandler("doc.html").addResourceLocations("classpath:/META-INF/resources/");
