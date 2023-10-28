@@ -15,6 +15,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.smile67.utils.RedisConstants.CACHE_SHOP_TYPE_KEY;
+
 /**
  * <p>
  * 服务实现类
@@ -30,7 +32,7 @@ public class ShopTypeServiceImpl extends ServiceImpl<ShopTypeMapper, ShopType> i
     @Override
     public Result queryList() {
         // 1. 从redis中查询店铺数据
-        List<String> shopTypeListJson = stringRedisTemplate.opsForList().range("cache:shop:type", 0, -1);
+        List<String> shopTypeListJson = stringRedisTemplate.opsForList().range(CACHE_SHOP_TYPE_KEY, 0, -1);
         // 2. 判断店铺类型是否存在（命中缓存）
         if (CollectionUtil.isNotEmpty(shopTypeListJson)) {
             // 3. 存在,直接返回
@@ -52,7 +54,7 @@ public class ShopTypeServiceImpl extends ServiceImpl<ShopTypeMapper, ShopType> i
                 .sorted(Comparator.comparing(ShopType::getSort))
                 .map(item -> JSONUtil.toJsonStr(item))
                 .collect(Collectors.toList());
-        stringRedisTemplate.opsForList().rightPushAll("cache:shop:type", shopTypeListJson);
+        stringRedisTemplate.opsForList().rightPushAll(CACHE_SHOP_TYPE_KEY, shopTypeListJson);
         // 7. 返回数据
         return Result.ok(shopTypeList);
     }

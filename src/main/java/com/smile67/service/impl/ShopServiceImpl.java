@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 
+import static com.smile67.utils.RedisConstants.CACHE_SHOP_KEY;
+
 /**
  * <p>
  * 服务实现类
@@ -29,7 +31,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
     @Override
     public Result queryById(Long id) {
         // 1.根据id从redis中查询店铺
-        String shopJson = stringRedisTemplate.opsForValue().get("cache:shop:" + id);
+        String shopJson = stringRedisTemplate.opsForValue().get(CACHE_SHOP_KEY + id);
         // 2.命中，直接返回店铺信息
         if (StrUtil.isNotBlank(shopJson)) {
             Shop shop = BeanUtil.toBean(shopJson, Shop.class);
@@ -42,7 +44,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
             return Result.fail("店铺不存在！");
         }
         // 5.存在，将店铺信息写入到Redis中
-        stringRedisTemplate.opsForValue().set("cache:shop:"+ id, JSONUtil.toJsonStr(shop));
+        stringRedisTemplate.opsForValue().set(CACHE_SHOP_KEY+ id, JSONUtil.toJsonStr(shop));
         // 6.返回
         return Result.ok(shop);
     }
