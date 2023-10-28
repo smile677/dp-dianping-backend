@@ -13,7 +13,7 @@ import java.util.List;
 
 /**
  * <p>
- * 前端控制器
+ * 根据类型查询店铺
  * </p>
  *
  * @author smile67
@@ -26,8 +26,6 @@ public class ShopTypeController {
 
     @GetMapping("list")
     public Result queryTypeList() {
-        List<ShopType> typeList = typeService
-                .query().orderByAsc("sort").list();
-        return Result.ok(typeList);
+        return typeService.queryList();
     }
 }
