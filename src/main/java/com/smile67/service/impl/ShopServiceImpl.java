@@ -14,8 +14,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.concurrent.TimeUnit;
 
-import static com.smile67.utils.RedisConstants.CACHE_SHOP_KEY;
-import static com.smile67.utils.RedisConstants.CACHE_SHOP_TTL;
+import static com.smile67.utils.RedisConstants.*;
 
 /**
  * <p>
@@ -34,16 +33,31 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
     public Result queryById(Long id) {
         // 1.根据id从redis中查询店铺
         String shopJson = stringRedisTemplate.opsForValue().get(CACHE_SHOP_KEY + id);
-        // 2.命中，直接返回店铺信息
+        // 2.命中，
+        // 2.1 有值
         if (StrUtil.isNotBlank(shopJson)) {
+            // isNotBlank:
+            // null->false
+            // ""  ->false
+            // \t\n->false
+            // abc ->true
             Shop shop = BeanUtil.toBean(shopJson, Shop.class);
             Result.ok(shop);
         }
+        // 2.2 空字符串
+        if (shopJson != null) {
+            // 返回一个错误信息
+            return Result.fail("缓存中店铺信息不存在");
+        }
+        // 2.3 null
         // 3.未命中，直接查询数据库
         Shop shop = getById(id);
         // 4.不存在，返回错误信息
         if (shop == null) {
-            return Result.fail("店铺不存在！");
+            // 将空值写入redis
+                stringRedisTemplate.opsForValue().set(CACHE_SHOP_KEY + id, "", CACHE_NULL_TTL,TimeUnit.MINUTES);
+            // 返回错误信息
+            return Result.fail("数据库中店铺信息不存在！");
         }
         // 5.存在，将店铺信息写入到Redis中
         stringRedisTemplate.opsForValue().set(CACHE_SHOP_KEY + id, JSONUtil.toJsonStr(shop), CACHE_SHOP_TTL, TimeUnit.MINUTES);
