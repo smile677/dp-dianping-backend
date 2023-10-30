@@ -10,6 +10,7 @@ import com.smile67.mapper.ShopMapper;
 import com.smile67.service.IShopService;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.concurrent.TimeUnit;
@@ -65,7 +66,15 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         // 6.返回
         return Result.ok(shop);
     }
+
+    /**
+     *
+     * @param shop 店铺实体
+     * @return 统一封装Result类
+     * 当redis删除失败的时候，回滚不让数据库进行更新
+     */
     @Override
+    @Transactional(rollbackFor = RuntimeException.class)
     public Result update(Shop shop) {
         Long id = shop.getId();
         if (id == null) {
