@@ -43,7 +43,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
             // \t\n->false
             // abc ->true
             Shop shop = BeanUtil.toBean(shopJson, Shop.class);
-            Result.ok(shop);
+           return Result.ok(shop);
         }
         // 2.2 空字符串
         if (shopJson != null) {
@@ -56,7 +56,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         // 4.不存在，返回错误信息
         if (shop == null) {
             // 将空值写入redis
-                stringRedisTemplate.opsForValue().set(CACHE_SHOP_KEY + id, "", CACHE_NULL_TTL,TimeUnit.MINUTES);
+            stringRedisTemplate.opsForValue().set(CACHE_SHOP_KEY + id, "", CACHE_NULL_TTL, TimeUnit.MINUTES);
             // 返回错误信息
             return Result.fail("数据库中店铺信息不存在！");
         }
@@ -68,7 +68,6 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
     }
 
     /**
-     *
      * @param shop 店铺实体
      * @return 统一封装Result类
      * 当redis删除失败的时候，回滚不让数据库进行更新
