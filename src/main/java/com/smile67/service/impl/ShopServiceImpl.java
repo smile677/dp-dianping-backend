@@ -10,6 +10,7 @@ import com.smile67.dto.Result;
 import com.smile67.entity.Shop;
 import com.smile67.mapper.ShopMapper;
 import com.smile67.service.IShopService;
+import com.smile67.utils.CacheClient;
 import com.smile67.utils.RedisData;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,8 @@ import static com.smile67.utils.RedisConstants.*;
  */
 @Service
 public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IShopService {
+    @Resource
+    private CacheClient cacheClient;
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
@@ -40,12 +43,16 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
     public Result queryById(Long id) {
         // 缓存穿透
         // Shop shop = queryWithPassThrough(id);
+//        Shop shop = cacheClient
+//                .queryWithPassThrough(CACHE_SHOP_KEY, id, Shop.class, id2 -> getById(id2), CACHE_SHOP_TTL, TimeUnit.MINUTES);
 
         // 互斥锁解决缓存击穿
-        // Shop shop = queryWithMutex(id);
+//        Shop shop = queryWithMutex(id);
+        Shop shop = cacheClient
+                .queryWithLogicalExpire(CACHE_SHOP_KEY, id, Shop.class, this::getById, 20L, TimeUnit.SECONDS);
 
         // 逻辑过期字段解决缓存击穿
-        Shop shop = queryWithLogicalExpire(id);
+        // Shop shop = queryWithLogicalExpire(id);
         if (shop == null) {
             return Result.fail("商铺不存在");
         }
@@ -66,8 +73,9 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
      * @return 店铺信息
      */
     public Shop queryWithLogicalExpire(Long id) {
+        String key = CACHE_SHOP_KEY + id;
         // 1.根据id从redis中查询店铺
-        String shopJson = stringRedisTemplate.opsForValue().get(CACHE_SHOP_KEY + id);
+        String shopJson = stringRedisTemplate.opsForValue().get(key);
         // 2.判断是否命中
         if (StrUtil.isBlank(shopJson)) {
             // 3. 未命中，直接返回空
@@ -86,7 +94,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         // 5.2 过期，需要缓存重建
         // 6. 缓存重建
         // 6.1 获取互斥锁
-        String lockKey = "lock:shop" + id;
+        String lockKey = LOCK_SHOP_KEY + id;
         boolean isLock = tryLock(lockKey);
         // 6.2 判断是否获取锁成功
         if (isLock) {
@@ -108,11 +116,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
                 }
             });
         }
-
         // 6.4 返回过期的商铺信息
-
-
-        // 6.返回
         return shop;
     }
 
