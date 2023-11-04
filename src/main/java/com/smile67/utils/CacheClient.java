@@ -1,5 +1,6 @@
 package com.smile67.utils;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -56,6 +57,85 @@ public class CacheClient {
         redisDate.setExpireTime(LocalDateTime.now().plusSeconds(unit.toSeconds(time)));
         // 写入Redis
         stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(redisDate));
+    }
+
+    /**
+     * 斥锁解决缓存击穿问题
+     *
+     * @param keyPrefix  keyPrefix
+     * @param id         id
+     * @param type       返回值类型
+     * @param dbFallback 调用的函数
+     * @param time       缓存时间
+     * @param unit       缓存时间单位
+     * @param <R>        返回值类型
+     * @param <ID>       id类型
+     * @return <R>
+     */
+    public <R, ID> R queryWithMutex(String keyPrefix, ID id, Class<R> type, Function<ID, R> dbFallback, Long time, TimeUnit unit) {
+        String key = keyPrefix + id;
+        // 1.根据id从redis中查询店铺
+        String json = stringRedisTemplate.opsForValue().get(key);
+        // 2.命中，
+        // 2.1 有值
+        if (StrUtil.isNotBlank(json)) {
+            // isNotBlank:
+            // null->false
+            // ""  ->false
+            // \t\n->false
+            // abc ->true √
+            //直接返回商品信息
+            return JSONUtil.toBean(json, type);
+        }
+        // 2.2 空字符串
+        if (json != null) {
+            // 返回一个错误信息
+            return null;
+        }
+        // 2.3 null（即，未命中）
+
+        // 3. 未命中，实现缓存重建
+        String lockKey = null;
+        R r;
+        try {
+            // 3.1 获取互斥锁
+            lockKey = LOCK_SHOP_KEY + id;
+            boolean isLock = tryLock(lockKey);
+            // 3.2 判断是否获取到互斥锁
+            if (!isLock) {
+                // 3.3 失败，休眠并重试
+                Thread.sleep(50);
+                // 重新查询(使用递归实现)
+                return queryWithMutex(keyPrefix, id, type, dbFallback, time, unit);
+            }
+            // 3.4 成功
+            // 3.4.1 再次检测 redis 缓存是否存在，若存在则不需要重建缓存
+            String cacheShopJson = stringRedisTemplate.opsForValue().get(key);
+            if (StrUtil.isNotBlank(cacheShopJson)) {
+                // 不为空，直接返回
+                return BeanUtil.toBean(cacheShopJson, type);
+            }
+            // 3.4.2 根据 id 直接查询数据库
+            //热点key满足两个条件 1.高并发 2.缓存重建的时间比较久√
+            // 模拟重建延时，延时越高，并发并发出现的线程也越多-->检验锁的可靠性
+            r = dbFallback.apply(id);
+            // 4.不存在，返回错误信息
+            if (r == null) {
+                // 将空值写入redis
+                stringRedisTemplate.opsForValue().set(key, "", CACHE_NULL_TTL, TimeUnit.MINUTES);
+                // 返回错误信息
+                return null;
+            }
+            // 5.存在，将店铺信息写入到Redis中
+            stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(r), time, unit);
+        } catch (InterruptedException e) {
+            throw new RuntimeException();
+        } finally {
+            // 6. 释放互斥锁
+            unlock(lockKey);
+        }
+        // 7. 返回
+        return r;
     }
 
     /**
