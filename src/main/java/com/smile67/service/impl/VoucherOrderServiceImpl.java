@@ -8,7 +8,6 @@ import com.smile67.mapper.VoucherOrderMapper;
 import com.smile67.service.ISeckillVoucherService;
 import com.smile67.service.IVoucherOrderService;
 import com.smile67.utils.RedisIdWorker;
-import com.smile67.utils.UserHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +31,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
 
     /**
      * 设计到两张表：seckillVoucher 和 VoucherOrder
+     *
      * @param voucherId 优惠券id
      * @return 统一通用返回类
      */
@@ -72,8 +72,10 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         //  代金券id
         voucherOrder.setVoucherId(voucherId);
         //  用户id
-        Long userId = UserHolder.getUser().getId();
-        voucherOrder.setUserId(userId);
+        //Long userId = UserHolder.getUser().getId();
+        // voucherOrder.setUserId(userId);
+        // TODO JMeter测试使用 正常使用的时候换成上面的代码
+        voucherOrder.setUserId(1010L);
         save(voucherOrder);
         // 返回订单id
         return Result.ok(orderId);

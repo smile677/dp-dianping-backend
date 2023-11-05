@@ -40,6 +40,8 @@ public class WebMVConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
                         "/shop/**",
                         "/voucher/**",
+                        // TODO JMeter测试的时候添加的， 真实使用的时候删除下面一行
+                        "/voucher-order/**",
                         "/shop-type/**",
                         "/upload/**",
                         "/blog/hot",
