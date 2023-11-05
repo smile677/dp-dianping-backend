@@ -9,6 +9,7 @@ import com.smile67.service.ISeckillVoucherService;
 import com.smile67.service.IVoucherOrderService;
 import com.smile67.utils.RedisIdWorker;
 import com.smile67.utils.UserHolder;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,7 +38,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
      * @return 统一通用返回类
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
+
     public Result seckillVoucher(Long voucherId) {
         // 查询优惠券信息
         SeckillVoucher voucher = seckillVoucherService.getById(voucherId);
@@ -55,10 +56,21 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         if (voucher.getStock() <= 0) {
             return Result.fail("库存不足");
         }
+        Long userId = UserHolder.getUser().getId();
+        synchronized (userId.toString().intern()) {
+            // TODO 代理对象这部分，复习Spring
+            IVoucherOrderService proxy = (IVoucherOrderService) AopContext.currentProxy();
+            return proxy.createVoucherOrder(voucherId);
+        }
+    }
 
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Result createVoucherOrder(Long voucherId) {
         // 一人一单
         //  查询订单(根据user_id 和 voucher_id)
         Long userId = UserHolder.getUser().getId();
+
         //  判断订单是否存在
         Integer count = query().eq("user_id", userId).eq("voucher_id", voucherId).count();
         if (count > 0) {
@@ -91,7 +103,9 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         //  JMeter测试使用 正常使用的时候换成上面的代码
         // voucherOrder.setUserId(1010L);
         save(voucherOrder);
+
         // 返回订单id
         return Result.ok(orderId);
+
     }
 }

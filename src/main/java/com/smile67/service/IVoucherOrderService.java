@@ -14,9 +14,18 @@ import com.smile67.entity.VoucherOrder;
 public interface IVoucherOrderService extends IService<VoucherOrder> {
 
     /**
-     *  秒杀下单
+     * 秒杀下单
+     *
      * @param voucherId 优惠券id
      * @return 统一包装类
      */
     Result seckillVoucher(Long voucherId);
+
+    /**
+     * 创建优惠券订单
+     *
+     * @param voucherId
+     * @return
+     */
+    Result createVoucherOrder(Long voucherId);
 }
