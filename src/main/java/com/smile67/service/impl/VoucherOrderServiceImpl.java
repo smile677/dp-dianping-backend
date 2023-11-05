@@ -8,6 +8,7 @@ import com.smile67.mapper.VoucherOrderMapper;
 import com.smile67.service.ISeckillVoucherService;
 import com.smile67.service.IVoucherOrderService;
 import com.smile67.utils.RedisIdWorker;
+import com.smile67.utils.UserHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,7 +55,17 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         if (voucher.getStock() <= 0) {
             return Result.fail("库存不足");
         }
-        // 扣减库存
+
+        // 一人一单
+        //  查询订单(根据user_id 和 voucher_id)
+        Long userId = UserHolder.getUser().getId();
+        //  判断订单是否存在
+        Integer count = query().eq("user_id", userId).eq("voucher_id", voucherId).count();
+        if (count > 0) {
+            // 库存已经存在，返回异常结果
+            return Result.fail("用户已经购买过一次了");
+        }
+        // 库存不存在 扣减库存
         boolean success = seckillVoucherService
                 .update()
                 // set stock = stock -1
@@ -76,10 +87,9 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         //  代金券id
         voucherOrder.setVoucherId(voucherId);
         //  用户id
-        //Long userId = UserHolder.getUser().getId();
-        // voucherOrder.setUserId(userId);
-        // TODO JMeter测试使用 正常使用的时候换成上面的代码
-        voucherOrder.setUserId(1010L);
+        voucherOrder.setUserId(userId);
+        //  JMeter测试使用 正常使用的时候换成上面的代码
+        // voucherOrder.setUserId(1010L);
         save(voucherOrder);
         // 返回订单id
         return Result.ok(orderId);
