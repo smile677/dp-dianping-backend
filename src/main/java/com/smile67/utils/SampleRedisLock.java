@@ -1,5 +1,6 @@
 package com.smile67.utils;
 
+import cn.hutool.core.lang.UUID;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import javax.annotation.Resource;
@@ -17,7 +18,7 @@ public class SampleRedisLock implements ILock {
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
-    private String name;
+    private final String name;
 
     public SampleRedisLock(String name, StringRedisTemplate stringRedisTemplate) {
         this.name = name;
@@ -25,20 +26,28 @@ public class SampleRedisLock implements ILock {
     }
 
     public static final String KEY_PREFIX = "lock:";
+    public static final String ID_PREFIX = UUID.randomUUID().toString(true) + "-";
 
     @Override
     public boolean tryLock(long timeoutSec) {
         // 获取线程标识
-        long threadId = Thread.currentThread().getId();
+        String threadId = ID_PREFIX + Thread.currentThread().getId();
         // 获取锁
         Boolean success = stringRedisTemplate.opsForValue()
-                .setIfAbsent(KEY_PREFIX + name, threadId + "", timeoutSec, TimeUnit.SECONDS);
+                .setIfAbsent(KEY_PREFIX + name, threadId, timeoutSec, TimeUnit.SECONDS);
         return Boolean.TRUE.equals(success);
     }
 
     @Override
     public void unlock() {
-        // 释放锁
-        stringRedisTemplate.delete(KEY_PREFIX + name);
+        // 获取线程标识
+        String threadId = ID_PREFIX + Thread.currentThread().getId();
+        // 获取锁中的标识
+        String id = stringRedisTemplate.opsForValue().get(KEY_PREFIX + name);
+        // 判断标识是否一致
+        if (threadId.equals(id)) {
+            // 释放自己的锁
+            stringRedisTemplate.delete(KEY_PREFIX + name);
+        }
     }
 }
