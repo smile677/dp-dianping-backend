@@ -8,8 +8,10 @@ import com.smile67.mapper.VoucherOrderMapper;
 import com.smile67.service.ISeckillVoucherService;
 import com.smile67.service.IVoucherOrderService;
 import com.smile67.utils.RedisIdWorker;
+import com.smile67.utils.SampleRedisLock;
 import com.smile67.utils.UserHolder;
 import org.springframework.aop.framework.AopContext;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +32,8 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
     private ISeckillVoucherService seckillVoucherService;
     @Resource
     private RedisIdWorker redisIdWorker;
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
     /**
      * 设计到两张表：seckillVoucher 和 VoucherOrder
@@ -57,10 +61,25 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
             return Result.fail("库存不足");
         }
         Long userId = UserHolder.getUser().getId();
-        synchronized (userId.toString().intern()) {
-            // TODO 代理对象这部分，复习Spring
+        // 创建锁对象
+        SampleRedisLock sampleRedisLock = new SampleRedisLock("order:" + userId, stringRedisTemplate);
+        // 获取锁
+        //  方便断电调试 1200s ->5s
+        boolean isLock = sampleRedisLock.tryLock(1200L);
+        // 判断获取锁是否成功
+        if (!isLock) {
+            //  获取锁失败，返回错误信息
+            return Result.fail("不允许重复下单！");
+        }
+        //  获取锁成功
+        try {
+            // TODO 代理对象这部分，复习Spring事务失效的几种可能性
+            // 获取代理对象（事物）
             IVoucherOrderService proxy = (IVoucherOrderService) AopContext.currentProxy();
             return proxy.createVoucherOrder(voucherId);
+        } finally {
+            // 释放锁
+            sampleRedisLock.unlock();
         }
     }
 
