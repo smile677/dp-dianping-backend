@@ -120,11 +120,9 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         //  用户id
         voucherOrder.setUserId(userId);
         //  JMeter测试使用 正常使用的时候换成上面的代码
-        // voucherOrder.setUserId(1010L);
         save(voucherOrder);
 
         // 返回订单id
         return Result.ok(orderId);
-
     }
 }

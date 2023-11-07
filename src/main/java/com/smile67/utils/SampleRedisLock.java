@@ -1,9 +1,12 @@
 package com.smile67.utils;
 
 import cn.hutool.core.lang.UUID;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -27,6 +30,14 @@ public class SampleRedisLock implements ILock {
 
     public static final String KEY_PREFIX = "lock:";
     public static final String ID_PREFIX = UUID.randomUUID().toString(true) + "-";
+    public static final DefaultRedisScript<Long> UNLOCK_SCRIPT;
+
+    // 加载类的时候就提前加载好脚本，避免执行方法时才执行加载脚本使用IO影响性能
+    static {
+        UNLOCK_SCRIPT = new DefaultRedisScript<>();
+        UNLOCK_SCRIPT.setLocation(new ClassPathResource("unlock.lua"));
+        UNLOCK_SCRIPT.setResultType(Long.class);
+    }
 
     @Override
     public boolean tryLock(long timeoutSec) {
@@ -40,6 +51,14 @@ public class SampleRedisLock implements ILock {
 
     @Override
     public void unlock() {
+        Long execute = stringRedisTemplate.execute(UNLOCK_SCRIPT,
+                Collections.singletonList(KEY_PREFIX + name),
+                ID_PREFIX + Thread.currentThread().getId());
+        System.out.println("execute = " + execute);
+    }
+
+    /*@Override
+    public void unlock() {
         // 获取线程标识
         String threadId = ID_PREFIX + Thread.currentThread().getId();
         // 获取锁中的标识
@@ -49,5 +68,5 @@ public class SampleRedisLock implements ILock {
             // 释放自己的锁
             stringRedisTemplate.delete(KEY_PREFIX + name);
         }
-    }
+    }*/
 }
