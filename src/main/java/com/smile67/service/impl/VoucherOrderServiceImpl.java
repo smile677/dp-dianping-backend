@@ -8,8 +8,9 @@ import com.smile67.mapper.VoucherOrderMapper;
 import com.smile67.service.ISeckillVoucherService;
 import com.smile67.service.IVoucherOrderService;
 import com.smile67.utils.RedisIdWorker;
-import com.smile67.utils.SampleRedisLock;
 import com.smile67.utils.UserHolder;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,8 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
     private RedisIdWorker redisIdWorker;
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+    @Resource
+    private RedissonClient redissonClient;
 
     /**
      * 设计到两张表：seckillVoucher 和 VoucherOrder
@@ -62,10 +65,12 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         }
         Long userId = UserHolder.getUser().getId();
         // 创建锁对象
-        SampleRedisLock sampleRedisLock = new SampleRedisLock("order:" + userId, stringRedisTemplate);
+        // SampleRedisLock lock = new SampleRedisLock("order:" + userId, stringRedisTemplate);
+        RLock lock = redissonClient.getLock("lock:order:" + userId);
         // 获取锁
         //  方便断电调试 1200s ->5s
-        boolean isLock = sampleRedisLock.tryLock(1200L);
+        // boolean isLock = lock.tryLock(1200L);
+        boolean isLock = lock.tryLock();
         // 判断获取锁是否成功
         if (!isLock) {
             //  获取锁失败，返回错误信息
@@ -79,7 +84,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
             return proxy.createVoucherOrder(voucherId);
         } finally {
             // 释放锁
-            sampleRedisLock.unlock();
+            lock.unlock();
         }
     }
 
