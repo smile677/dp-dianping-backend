@@ -8,6 +8,7 @@ import org.redisson.api.RedissonClient;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @BelongsProject: IntelliJ IDEA
@@ -30,9 +31,9 @@ public class RedissonTest {
     }
 
     @Test
-    void method1() {
+    void method1() throws InterruptedException {
         // 尝试获取锁
-        boolean isLock = lock.tryLock();
+        boolean isLock = lock.tryLock(1L, TimeUnit.SECONDS);
         if (!isLock) {
             log.error("获取锁失败。。。。1");
             return;
