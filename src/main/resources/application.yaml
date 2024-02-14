@@ -10,6 +10,7 @@ spring:
     password: mpw:InG7X2EK0iDuRSSXSY+P8Q==
   redis:
     host: mpw:iZDZqRx+xQfIquAEf1JOxw==
+    #host: 127.0.0.1
     port: 6379
     #password: mpw:jhs9uas8G3imcMLD5xwozg==
     lettuce:

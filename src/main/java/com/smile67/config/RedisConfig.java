@@ -26,24 +26,24 @@ public class RedisConfig {
         return Redisson.create(config);
     }
 
-    @Bean
-    public RedissonClient redissonClient2() {
-        // 配置类
-        Config config = new Config();
-        // 添加redis地址
-        config.useSingleServer().setAddress("redis://43.136.29.239:6380");
-        // 创建客户端
-        return Redisson.create(config);
-    }
-
-    @Bean
-    public RedissonClient redissonClient3() {
-        // 配置类
-        Config config = new Config();
-        // 添加redis地址
-        config.useSingleServer().setAddress("redis://43.136.29.239:6381");
-        // 创建客户端
-        return Redisson.create(config);
-    }
+//    @Bean
+//    public RedissonClient redissonClient2() {
+//        // 配置类
+//        Config config = new Config();
+//        // 添加redis地址
+//        config.useSingleServer().setAddress("redis://43.136.29.239:6380");
+//        // 创建客户端
+//        return Redisson.create(config);
+//    }
+//
+//    @Bean
+//    public RedissonClient redissonClient3() {
+//        // 配置类
+//        Config config = new Config();
+//        // 添加redis地址
+//        config.useSingleServer().setAddress("redis://43.136.29.239:6381");
+//        // 创建客户端
+//        return Redisson.create(config);
+//    }
 
 }
