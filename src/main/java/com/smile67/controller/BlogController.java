@@ -5,9 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.smile67.dto.Result;
 import com.smile67.dto.UserDTO;
 import com.smile67.entity.Blog;
-import com.smile67.entity.User;
 import com.smile67.service.IBlogService;
-import com.smile67.service.IUserService;
 import com.smile67.utils.SystemConstants;
 import com.smile67.utils.UserHolder;
 import org.springframework.web.bind.annotation.*;
@@ -42,10 +40,7 @@ public class BlogController {
 
     @PutMapping("/like/{id}")
     public Result likeBlog(@PathVariable("id") Long id) {
-        // 修改点赞数量
-        blogService.update()
-                .setSql("liked = liked + 1").eq("id", id).update();
-        return Result.ok();
+        return blogService.likeBlog(id);
     }
 
     @GetMapping("/of/me")
@@ -62,7 +57,7 @@ public class BlogController {
 
     @GetMapping("/hot")
     public Result queryHotBlog(@RequestParam(value = "current", defaultValue = "1") Integer current) {
-       return blogService.getHotBlog(current);
+        return blogService.getHotBlog(current);
     }
 
     @GetMapping("/{id}")
