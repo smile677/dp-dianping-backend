@@ -1,6 +1,7 @@
 package com.smile67.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.smile67.dto.Result;
 import com.smile67.entity.Blog;
 
 /**
@@ -11,5 +12,17 @@ import com.smile67.entity.Blog;
  * @author smile67
  */
 public interface IBlogService extends IService<Blog> {
+    /**
+     * 通过博客id查询博客
+     * @param id 博客id
+     * @return 统一返回结果
+     */
+    Result getBlougById(Long id);
 
+    /**
+     * 查询热榜笔记
+     * @param current 当前页
+     * @return 统一返回结果
+     */
+    Result getHotBlog(Integer current);
 }
