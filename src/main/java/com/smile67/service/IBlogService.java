@@ -51,4 +51,12 @@ public interface IBlogService extends IService<Blog> {
      * @return 统一返回结果
      */
     Result saveBlog(Blog blog);
+
+    /**
+     * 实现滚动分页查询
+     * @param max 最大分数值
+     * @param offset 分页偏移量
+     * @return 统一返回结果
+     */
+    Result queryBlogOfFollow(Long max, Integer offset);
 }

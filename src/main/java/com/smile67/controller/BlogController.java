@@ -77,4 +77,17 @@ public class BlogController {
         return Result.ok(records);
     }
 
+    /**
+     * 实现滚动分页查询
+     * @param max 最大分数值
+     * @param offset 分页偏移量
+     * @return 统一返回结果
+     */
+    @GetMapping("/of/follow")
+    public Result queryBlogOfFollow(
+            @RequestParam("lastId") Long max,
+            @RequestParam(value = "offset", defaultValue = "0") Integer offset){
+        return blogService.queryBlogOfFollow(max, offset);
+    }
+
 }
