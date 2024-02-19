@@ -71,7 +71,6 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
      */
     private class VoucherOrderHandler implements Runnable {
         String queueName = "stream.orders";
-
         @Override
         public void run() {
             while (true) {
@@ -131,7 +130,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
                     log.debug("处理pending-list异常：" + e);
                     try {
                         Thread.sleep(20);
-                    } catch (InterruptedException ex) {
+                    } catch (Exception ex) {
                         ex.printStackTrace();
                     }
                 }
@@ -259,7 +258,8 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
             // 释放锁
             lock.unlock();
         }
-    }*/
+    }
+    */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void createVoucherOrder(VoucherOrder voucherOrder) {

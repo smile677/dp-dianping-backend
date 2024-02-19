@@ -5,6 +5,7 @@ import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.smile67.dto.Result;
 import com.smile67.entity.Shop;
@@ -12,12 +13,19 @@ import com.smile67.mapper.ShopMapper;
 import com.smile67.service.IShopService;
 import com.smile67.utils.CacheClient;
 import com.smile67.utils.RedisData;
+import com.smile67.utils.SystemConstants;
+import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.GeoResult;
+import org.springframework.data.geo.GeoResults;
+import org.springframework.data.redis.connection.RedisGeoCommands;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.domain.geo.GeoReference;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -292,5 +300,72 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         // 2. 删除Redis中的缓存
         stringRedisTemplate.delete(CACHE_SHOP_KEY + id);
         return Result.ok();
+    }
+
+    @Override
+    public Result queryShopByType(Integer typeId, Integer current, Double x, Double y) {
+        // 1. 判断是否需要根据坐标查询
+        if (x == null || y == null) {
+            //  不需要坐标查询，按照数据库查询
+            // 根据类型分页查询
+            Page<Shop> page = query()
+                    .eq("type_id", typeId)
+                    .page(new Page<>(current, SystemConstants.DEFAULT_PAGE_SIZE));
+            // 返回数据
+            return Result.ok(page.getRecords());
+        }
+        // 2. 计算分页数据
+        int from = (current - 1) * SystemConstants.DEFAULT_PAGE_SIZE;
+        int end = current * SystemConstants.DEFAULT_PAGE_SIZE;
+
+        // 3. 查询redis、按照距离排序、分页。结果：shopId、distance
+        String key = SHOP_GEO_KEY + typeId;
+        //  GEOSEARCH key （BYMEMBER）BYLONLAT x y BYDISTANCE 5000 WITHDISTANCE
+        GeoResults<RedisGeoCommands.GeoLocation<String>> results = stringRedisTemplate.opsForGeo()
+                .search(
+                        key,
+                        // bylonlat
+                        GeoReference.fromCoordinate(x, y),
+                        // bydistance
+                        new Distance(5000),
+                        // 添加额外参数
+                        RedisGeoCommands.GeoSearchCommandArgs.newGeoSearchArgs()
+                                // 带上距离 withdistance
+                                .includeDistance()
+                                // 分页(0-end)
+                                .limit(end)
+                );
+        // 4. 解析出id
+        if (results == null) {
+            return Result.ok(Collections.emptyList());
+        }
+        List<GeoResult<RedisGeoCommands.GeoLocation<String>>> list = results.getContent();
+        if (list.size() <= from) {
+            // 没有下一页了，结束
+            return Result.ok(Collections.emptyList());
+        }
+        //  4.1. 截取 from-end 部分
+        List<Long> ids = new ArrayList<>(list.size());
+        // 将店铺id和距离存入map形成一一对应的关系
+        Map<String, Distance> distanceMap = new HashMap<>(list.size());
+        // 第二页：总共9条 第三页：从第10条开始查
+        list.stream().skip(from).forEach(result -> {
+            // 4.2 获取店铺id (即存入rudis中的member)
+            String shopIdStr = result.getContent().getName();
+            ids.add(Long.valueOf(shopIdStr));
+            // 4.3 获取距离（距离是redis算出来的）
+            Distance distance = result.getDistance();
+            distanceMap.put(shopIdStr, distance);
+        });
+        // 5. 根据 id 查询 Shop
+        String idsStr = StrUtil.join(",", ids);
+        List<Shop> shops = query().in("id", ids).last("ORDER BY FIELD(id," + idsStr + ")").list();
+        for (Shop shop : shops) {
+            // 5.1. 设置距离distance不是数据库字段，是用来专门返回给前端的字段
+            double distance = distanceMap.get(shop.getId().toString()).getValue();
+            shop.setDistance(distance);
+        }
+        // 6. 返回
+        return Result.ok(shops);
     }
 }
