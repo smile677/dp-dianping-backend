@@ -53,7 +53,6 @@ public class UserController {
      *
      * @param loginForm 登录参数，包含手机号、验证码；或者手机号、密码
      * @param session   登录成功后将用户信息存入到session中，同时校验验证码也需要session
-     *
      */
     @PostMapping("/login")
     public Result login(@RequestBody LoginFormDTO loginForm, HttpSession session) {
@@ -111,5 +110,12 @@ public class UserController {
         return Result.ok(userDTO);
     }
 
-
+    @PostMapping("/sign")
+    public Result sign(){
+        return userService.sign();
+    }
+    @GetMapping("/sign/count")
+    public Result signCount(){
+        return userService.signCount();
+    }
 }
