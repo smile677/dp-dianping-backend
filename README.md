@@ -1,7 +1,7 @@
 <img src="logo.jpg" style="zoom:50%;" />
 
 <div align="center">
-<h1>店铺点评</h1>
+<h1>美味指南App</h1>
 </div>
 
 <div align="center">
